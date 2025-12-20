@@ -139,6 +139,7 @@ namespace
     // Number, or NULL value if included. .. The value SHOULD normally not
     // be Null and Numbers SHOULD NOT contain fractional parts
     case tr_variant::StringIndex:
+    case tr_variant::StringViewIndex:
     case tr_variant::IntIndex:
     case tr_variant::DoubleIndex:
     case tr_variant::NullIndex:
@@ -180,7 +181,6 @@ namespace
 auto constexpr RecentlyActiveSeconds = time_t{ 60 };
 auto constexpr RpcVersion = int64_t{ 18 };
 auto constexpr RpcVersionMin = int64_t{ 14 };
-auto constexpr RpcVersionSemver = "6.0.0"sv;
 
 enum class TrFormat : uint8_t
 {
@@ -1666,7 +1666,7 @@ void onPortTested(tr_web::FetchResponse const& web_response, DoneCb const& done_
     auto* data = static_cast<tr_rpc_idle_data*>(user_data);
 
     if (auto const addr = tr_address::from_string(primary_ip);
-        data->args_out.find_if<std::string_view>(TR_KEY_ip_protocol) == nullptr && addr && addr->is_valid())
+        !data->args_out.value_if<std::string_view>(TR_KEY_ip_protocol).has_value() && addr && addr->is_valid())
     {
         data->args_out.try_emplace(TR_KEY_ip_protocol, addr->is_ipv4() ? "ipv4"sv : "ipv6"sv);
     }
@@ -2687,7 +2687,7 @@ void add_strings_from_var(std::set<std::string_view>& strings, tr_variant const&
         return RpcVersionMin;
     case TR_KEY_rpc_version_semver:
     case TR_KEY_rpc_version_semver_kebab:
-        return RpcVersionSemver;
+        return TrRpcVersionSemver;
     case TR_KEY_script_torrent_added_enabled:
     case TR_KEY_script_torrent_added_enabled_kebab:
         return session.useScript(TR_SCRIPT_ON_TORRENT_ADDED);
